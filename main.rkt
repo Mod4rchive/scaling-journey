@@ -40,14 +40,14 @@
 ;el historial con el log añadido.
 (define update-history
   ( lambda (addition-log-list zones)
-     (append (car zones) (list addition-log-list))))
+     (append (list (car (car zones))) (list addition-log-list))))
 
 
 ;añade el historial actualizado al TDA zonas de la funcion realizada. recibe el historial actualizado
 ;(lista), el tda zonas y retorna el tda zonas con el historial actualizado.
 (define set-history
   ( lambda (updated-history zones)
-     (append (list updated-history) (cdr zones))))
+     (list (append (list updated-history) (cdr (car zones))) (cdr zones))))
 
 
 (define git (lambda (function)
