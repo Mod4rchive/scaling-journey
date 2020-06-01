@@ -15,6 +15,13 @@
    (list (list "REMOTE REPO1")
          (list "REMOTE REPO2") ) ))
 
+(define test2
+  (list
+   null
+   null
+   null
+   (list (list "master"))))
+
 
 (define (get_history workzone) (car workzone))
 
@@ -31,6 +38,13 @@
 (define (get_remoteRepoDirectory workzone) (cadddr workzone))
 
 (define (get_currentRemoteRepo workzone) (car (cadddr workzone)))
+
+(define (set_currentRemoteRepo new_currentRemoteRepo workzone)
+  (list
+   (get_history workzone)
+   (get_index workzone)
+   (get_localRepo workzone)
+   (append (list new_currentRemoteRepo) (cdr (get_remoteRepoDirectory workzone)))))
 
 (define (get_currentBranch workzone) (caar (cadddr workzone)))
 
@@ -75,7 +89,10 @@
                    (set_index (append (list (car files)) (get_index workzone)) workzone)))))
 
 (define (commit_envelope message workzone)
-  (set_index null (set_localRepo (append (list message) (get_index workzone)) workzone)))
+  (set_index null
+             (set_localRepo
+              (append (list (append (list message) (get_index workzone))) (get_localRepo workzone))
+              workzone)))
 
 (define commit (lambda (message)
                  (lambda (workzone)
@@ -83,7 +100,7 @@
 
 (define (pull workzone)
   (set_localRepo
-   (pull_envelope (get_currentRemoteRepo workzone) (get_localRepo workzone) null) workzone))
+   (pull_envelope (cdr (get_currentRemoteRepo workzone)) (get_localRepo workzone) null) workzone))
 
 (define (pull_envelope remoteRepoCarry localRepoStatic ToBeAdded)
   (if [null? remoteRepoCarry]
@@ -93,3 +110,29 @@
                          ToBeAdded)
           (pull_envelope (cdr remoteRepoCarry) localRepoStatic
                          (append ToBeAdded (list (car remoteRepoCarry)))))))
+
+(define (push workzone)
+  (set_currentRemoteRepo (append (get_currentRemoteRepo workzone) (get_localRepo workzone)) workzone))
+
+(define (list-->string list_)
+    (if [null? list_]
+        ""
+        (apply string-append
+               (map (lambda (list_string) (string-append list_string " ")) list_))))
+
+(define (remoteRepo->string remoteRepo stringCarry)
+  (if [null? remoteRepo]
+      stringCarry
+      (remoteRepo->string (cdr remoteRepo) (string-append (list-->string (car remoteRepo))
+                                                          stringCarry))))
+
+(define (zonas->string workzone)
+  (apply string-append
+         (list
+          (list-->string (get_history workzone))
+          "\n"
+          (list-->string (get_index workzone))
+          "\n"
+          (list-->string (get_localRepo workzone))
+          "\n"
+          (remoteRepo->string (get_remoteRepoDirectory workzone) ""))))
