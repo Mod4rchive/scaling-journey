@@ -1,89 +1,95 @@
 #lang racket
-
-;zones = ((history index localRepo remoteRepo branch1) ... (... branchN))
+;zones = (history index localRepo remoteRepoDirectory)
 ;commit = (archivo1 ... archivoN)
-;localRepo = remoteRepo = (commit1 ... commitN)
-;history: log de las funciones aplicadas de la forma '( '(tiempoN funcionN) ... '(tiempo1 funcion1) )
+;localRepo = (commit1 ... commitN)
+;remoteRepo = ((branch1 commit1 ... commitN) (branchN commit 1 ... commit N))
+;history = ((tiempoN funcionN) ... (tiempo1 funcion1))
 ;en orden cronologico
-(define zonas1
-  (list (list (list "HISTORY") (list "INDEX") (list "LOCAL REPO") (list "REMOTE REPO") "master")))
 
-(define get-history
-  ( lambda (zones-list)
-     (car (car zones-list))))
 
-(define get-index
-  ( lambda (zones-list)
-     (cadr (car zones-list))))
+(define test1
+  (list
+   (list "HISTORY")
+   (list "INDEX")
+   (list "LOCAL REPO")
+   (list (list "REMOTE REPO1")
+         (list "REMOTE REPO2") ) ))
 
-(define get-localRepo
-  ( lambda (zones-list)
-     (caddr (car zones-list))))
 
-(define get-remoteRepo
-  ( lambda (zones-list)
-     (cadddr (car zones-list))))
+(define (get_history workzone) (car workzone))
 
-(define get-currentBranch
-  ( lambda (zones-list)
-     (car (cddddr (car zones-list)))))
+(define (get_index workzone) (cadr workzone))
 
+(define (set_index new_index workzone)
+  (list (get_history workzone) new_index (get_localRepo workzone) (get_remoteRepoDirectory workzone)))
+
+(define (set_localRepo new_localRepo workzone)
+  (list (get_history workzone) (get_index workzone) new_localRepo (get_remoteRepoDirectory workzone)))
+
+(define (get_localRepo workzone) (caddr workzone))
+
+(define (get_remoteRepoDirectory workzone) (cadddr workzone))
+
+(define (get_currentRemoteRepo workzone) (car (cadddr workzone)))
+
+(define (get_currentBranch workzone) (caar (cadddr workzone)))
 
 ;crea la unidad de historial. recibe el nombre de la funcion como string. se arreglara ingreso de
 ;datos despues.
-(define create-log
-  ( lambda (name-of-function-string)
-     (list (number->string (current-seconds)) name-of-function-string)))
-
+(define (build_log function_name_string)
+  (list (number->string (current-seconds)) function_name_string))
 
 ;actualiza el historial con una funcion dada. recibe una lista de log y el historial a sumar y retorna
 ;el historial con el log añadido.
-(define update-history
-  ( lambda (addition-log-list zones)
-     (append (list (car (car zones))) (list addition-log-list))))
-
+(define (build_history new_log workzone)
+  (append (list (caar workzone)) (list new_log)))
 
 ;añade el historial actualizado al TDA zonas de la funcion realizada. recibe el historial actualizado
 ;(lista), el tda zonas y retorna el tda zonas con el historial actualizado.
-(define set-history
-  ( lambda (updated-history zones)
-     (list (append (list updated-history) (cdr (car zones))) (cdr zones))))
+(define (set_history new_history workzone)
+  (list (append (list new_history) (car workzone)) (cdr workzone)))
+
+(define (set_remoteRepoDirectory new_remoteRepoDirectory workzone)
+  (list (get_history workzone) (get_index workzone) (get_localRepo workzone) new_remoteRepoDirectory))
 
 
 (define git (lambda (function)
-              (lambda (zones)
-                (function zones))))
+              (lambda (workzone)
+                (function workzone))))
 
-(define pull
-  (lambda (zones)
-               (set-history (update-history (create-log "pull") zones) zones)))
+(define add (lambda (files)
+              (lambda (workzone)
+                (add-all files workzone))))
 
-(define push
-  (lambda (zones)
-               (set-history (update-history (create-log "push") zones) zones)))
+(define (belongs? element list)
+ (if [boolean? (member element list)]
+     #f
+     #t))
 
-(define commit
-  (lambda (message)
-    (lambda (zones)
-      (set-history (update-history (create-log (string-append "commit -m " message)) zones) zones))))
+(define (add-all files workzone)
+  (if [null? files]
+      workzone
+      (if [belongs? (car files) (get_index workzone)]
+          (add-all (cdr files) workzone)
+          (add-all (cdr files)
+                   (set_index (append (list (car files)) (get_index workzone)) workzone)))))
 
-(define file-list-to-string
-  (lambda (file-list)
-    (if null?
-        ""
-        (apply string-append (map (lambda (file-string) (string-append " " file-string)) file-list)))))
+(define (commit_envelope message workzone)
+  (set_index null (set_localRepo (append (list message) (get_index workzone)) workzone)))
 
-(define add
-  (lambda (file-list)
-    (lambda (zones)
-      (set-history
-       (update-history
-        (create-log
-         (string-append "add" (file-list-to-string file-list)))
-        zones)
-       zones))))
+(define commit (lambda (message)
+                 (lambda (workzone)
+                   (commit_envelope message workzone))))
 
+(define (pull workzone)
+  (set_localRepo
+   (pull_envelope (get_currentRemoteRepo workzone) (get_localRepo workzone) null) workzone))
 
-;(define zonas->string
- ; (lambda (zones)
-  ;  ()))
+(define (pull_envelope remoteRepoCarry localRepoStatic ToBeAdded)
+  (if [null? remoteRepoCarry]
+      (append ToBeAdded localRepoStatic)
+      (if [belongs? (car remoteRepoCarry) localRepoStatic]
+          (pull_envelope (cdr remoteRepoCarry) localRepoStatic
+                         ToBeAdded)
+          (pull_envelope (cdr remoteRepoCarry) localRepoStatic
+                         (append ToBeAdded (list (car remoteRepoCarry)))))))
