@@ -40,12 +40,6 @@
 
 
 ;MODIFICADORES
-;descripcion: Funcion que retorna un nuevo TDA con el historial modificado.
-;dom: lista X area de trabajo
-;rec: area de trabajo
-(define (set_history new_history workzone)
-  (list (append (list new_history) (car workzone)) (cdr workzone)))
-
 ;descripcion:  Funcion que retorna un nuevo TDA con la lista de repositorios remotos modificada.
 ;dom: lista X area de trabajo
 ;rec: area de trabajo

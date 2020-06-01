@@ -3,6 +3,13 @@
 (require "remoteRepoTDA.rkt")
 (require "HistoryTDA.rkt")
 
+(define test2
+  (list
+   null
+   null
+   null
+   (list (list "master"))))
+
 
 ;GIT
 ;descripcion: Funcion git.
@@ -19,7 +26,7 @@
 ;rec: area de trabajo
 (define add (lambda (files)
               (lambda (workzone)
-                (add_envelope files workzone))))
+                (set_history "add" (add_envelope files workzone)))))
 		
 		
 ;descripcion: Funcion add.
@@ -41,7 +48,8 @@
 ;rec: area de trabajo
 (define commit (lambda (message)
                  (lambda (workzone)
-                   (commit_envelope message workzone))))		
+                   (set_history (string-append "commit -m " message)
+                                (commit_envelope message workzone)))))		
 
 		
 ;descripcion: Funcion commit.
@@ -59,8 +67,8 @@
 ;dom: area de trabajo
 ;rec: area de trabajo
 (define (pull workzone)
-  (set_localRepo
-   (pull_envelope (cdr (get_currentRemoteRepo workzone)) (get_localRepo workzone) null) workzone))
+  (set_history "pull" (set_localRepo
+   (pull_envelope (cdr (get_currentRemoteRepo workzone)) (get_localRepo workzone) null) workzone)))
 
 
 ;descripcion: Funcion pull.
@@ -82,7 +90,9 @@
 ;dom: area de trabajo
 ;rec: area de trabajo
 (define (push workzone)
-  (set_currentRemoteRepo (append (get_currentRemoteRepo workzone) (get_localRepo workzone)) workzone))
+  (set_history "push"
+               (set_currentRemoteRepo
+                (append (get_currentRemoteRepo workzone) (get_localRepo workzone)) workzone)))
 
 
 ;ZONAS->STRING
@@ -141,7 +151,9 @@
 ;rec: area de trabajo
 (define branch (lambda (branchName)
                  (lambda (workzone)
-                   (branch_envelope branchName workzone))))
+                   (set_history
+                    (string-append branchName "branch")
+                    (branch_envelope branchName workzone)))))
 
 
 ;descripcion: Funcion branch.
@@ -163,12 +175,12 @@
 ;rec: area de trabajo
 (define checkout (lambda (branchName)
                    (lambda (workzone)
-                     (set_remoteRepoDirectory
+                     (set_history "checkout" (set_remoteRepoDirectory
                       (checkout_envelope
                        (get_remoteRepoDirectory workzone)
                        (get_branch branchName (get_remoteRepoDirectory workzone))
                        (list (get_branch branchName (get_remoteRepoDirectory workzone))))
-                      workzone))))
+                      workzone)))))
 
 
 ;descripcion: Funcion checkout
