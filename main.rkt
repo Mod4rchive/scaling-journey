@@ -37,6 +37,7 @@
 
 (define (get_remoteRepoDirectory workzone) (cadddr workzone))
 
+
 (define (get_currentRemoteRepo workzone) (car (cadddr workzone)))
 
 (define (set_currentRemoteRepo new_currentRemoteRepo workzone)
@@ -47,6 +48,11 @@
    (append (list new_currentRemoteRepo) (cdr (get_remoteRepoDirectory workzone)))))
 
 (define (get_currentBranch workzone) (caar (cadddr workzone)))
+
+(define (set_branchName branchRepo newName)
+  (append
+   (list newName)
+   (car (branchRepo))))
 
 ;Constructor unidad  de historial (log).
 ;Recibe un string.
@@ -173,3 +179,78 @@
           (list-->string (get_localRepo workzone))
           "\n"
           (remoteRepo->string (get_remoteRepoDirectory workzone) ""))))
+
+;Funcion status.
+;Recibe el area de trabajo (lista).
+;Retorna una representacion string del area de trabajo.
+(define (status workzone)
+  (string-append
+   "\nArchivos en Index\n"
+   (map list-->string (get_index workzone))
+   "\nCommits en repositorio local: "
+   (number->string (length (get_localRepo workzone)))
+   "\nRama actual: "
+   (get_currentBranch workzone)))
+
+;Funcion log.
+;Recibe el area de trabajo (lista).
+;Retorna una representacion string del area de trabajo.
+(define (log workzone)
+  (log_envelope (get_localRepo workzone) ""))
+
+;Funcion log (recursion de cola).
+;Recibe el repositorio local (lista) y un string vacio.
+;Retorna una representacion string del area de trabajo.
+(define (log_envelope localRepo stringCarry)
+  (if [null? localRepo]
+      stringCarry
+      (log_envelope
+       (cdr localRepo)
+       (string-append stringCarry "\n" (list-->string (car localRepo))))))
+
+;Funcion envelope de branch.
+;Recibe un nombre (string) y el area de trabajo (lista).
+;Retorna la funcion branch del area de trabajo (lista).
+(define branch (lambda (branchName)
+                 (lambda (workzone)
+                   (branch_envelope branchName workzone))))
+
+;Funcion branch.
+;Recibe un nombre (string) y el area de trabajo (lista).
+;Retorna la funcion branch del area de trabajo (lista).
+(define (branch_envelope branchName workzone)
+  (list
+   (get_history workzone)
+   (get_index workzone)
+   (get_localRepo workzone)
+   (append
+    (get_remoteRepoDirectory workzone)
+    (set_branchName (car (get_remoteRepoDirectory workzone)) branchName))))
+
+(define (get_branch branchName remoteRepoDirectory)
+  (if [null? remoteRepoDirectory]
+      null
+      (if [equal? (car remoteRepoDirectory) (branchName)]
+          (car remoteRepoDirectory)
+          (get_branch branchName (cdr remoteRepoDirectory)))))
+
+(define checkout (lambda (branchName)
+                   (lambda (workzone)
+                     (set_remoteRepoDirectory
+                      (checkout_envelope
+                       (get_remoteRepoDirectory workzone)
+                       (get_branch branchName (get_remoteRepoDirectory workzone))
+                       (list (get_branch branchName (get_remoteRepoDirectory workzone))))
+                      workzone))))
+
+(define (checkout_envelope remoteRepoDirectory firstRepo finalDirectory)
+  (if [null? remoteRepoDirectory]
+      finalDirectory
+      (if [equal? (car remoteRepoDirectory) firstRepo]
+          (checkout_envelope (cdr remoteRepoDirectory) firstRepo finalDirectory)
+          (checkout_envelope (cdr remoteRepoDirectory) firstRepo
+                             (append finalDirectory (list (car remoteRepoDirectory)))))))
+
+(define merge null)
+
+(define diff null)
