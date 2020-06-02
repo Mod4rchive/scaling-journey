@@ -106,8 +106,21 @@
     (if [null? list_]
         ""
         (apply string-append
-               (map (lambda (list_string) (string-append list_string " ")) list_))))
-			   
+               (map (lambda (list_string) (string-append list_string "\n")) list_))))
+
+;descripcion: Funcion que genera una lista de strings separados por 
+;			  espacios para cada elemento de una lista TDA repositorio remoto dada.
+;dom: lista X string
+;rec: string
+;recursion: de cola
+(define (remoteRepo->string list_ stringCarry)
+    (if [null? list_]
+        (string-append stringCarry "\n\n")
+        (remoteRepo->string
+         (cdr list_)
+         (string-append stringCarry "\n" (list-->string (car list_))))
+        ))
+
 ;descripcion: Funcion que revisa la pertenencia de un elemento en una lista.
 ;dom: cualquier elemento X lista
 ;recorrido: booleano

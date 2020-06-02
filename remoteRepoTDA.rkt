@@ -27,24 +27,3 @@
   (append
    (list newName)
    (car (branchRepo))))
-
-;OTRA FUNCION   
-;descripcion: Funcion que genera una lista de strings separados por 
-;			  espacios para cada elemento de una lista dada.
-;dom: lista
-;rec: string
-(define (list--->string list_)
-    (if [null? list_]
-        ""
-        (apply string-append
-               (map (lambda (list_string) (string-append list_string " ")) list_))))
-
-
-;descripcion: Funcion que genera una representacion de repositorios remotos de lista a string.
-;dom: repositorio remoto X string
-;rec: string
-(define (remoteRepo->string remoteRepo stringCarry)
-  (if [null? remoteRepo]
-      stringCarry
-      (remoteRepo->string (cdr remoteRepo) (string-append (list--->string (car remoteRepo))
-                                                          stringCarry))))

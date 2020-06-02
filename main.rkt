@@ -106,24 +106,18 @@
 ;rec: string
 (define (zonas->string workzone)
   (string-append
-   "History\n"
+   "History:\n"
    (list-->string (get_history workzone))
-   "\n\nWorkspace\n"
+   "\n\nWorkspace:\n"
    (list-->string (get_workspace workzone))
-   "\n\nIndex\n"
+   "\n\nIndex:\n"
    (list-->string (get_index workzone))
-   "\n\nLocal Repository\n"
+   "\n\nLocal Repository:\n"
    (list-->string (get_localRepo workzone))
-   "\n\nRemote Repositories"
+   "\n\nRemote Repositories:"
    (remoteRepo->string (get_remoteRepoDirectory workzone) "")
   ))
 
-
-(define (remoteRepo->string list_ stringCarry)
-    (if [null? list_]
-        stringCarry
-        (remoteRepo->string (cdr list_) (string-append stringCarry "\n" (list-->string (car list_))))
-        ))
 
 ;STATUS
 ;descripcion: Funcion status.
