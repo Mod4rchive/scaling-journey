@@ -5,10 +5,11 @@
 
 (define test2
   (list
+   (list "0 git init")
    null
-   null
-   null
-   (list (list "master"))))
+   (list "file1.rkt" "file2.rkt" "file3.rkt" "file4.rkt")
+   (list "ignore .gitignore" "initialization readme.md")
+   (list (list "master" "initialization readme.md"))))
 
 
 ;GIT
@@ -58,7 +59,9 @@
 (define (commit_envelope message workzone)
   (set_index null
              (set_localRepo
-              (append (list (append (list message) (get_index workzone))) (get_localRepo workzone))
+              (append
+               (list (string-append message " " (list-->string (get_index workzone))))
+               (get_localRepo workzone))
               workzone)))
 
 
@@ -67,21 +70,23 @@
 ;dom: area de trabajo
 ;rec: area de trabajo
 (define (pull workzone)
-  (set_history "pull" (set_localRepo
-   (pull_envelope (cdr (get_currentRemoteRepo workzone)) (get_localRepo workzone) null) workzone)))
+  (set_history "pull"
+               (set_workspace
+                (pull_envelope (cdr (get_currentRemoteRepo workzone)) (get_workspace workzone) null)
+                workzone)))
 
 
 ;descripcion: Funcion pull.
 ;dom: lista X repositorio remoto X lista
 ;rec: repositorio remoto
 ;recursion: cola
-(define (pull_envelope remoteRepoCarry localRepoStatic ToBeAdded)
+(define (pull_envelope remoteRepoCarry workspaceStatic ToBeAdded)
   (if [null? remoteRepoCarry]
-      (append ToBeAdded localRepoStatic)
-      (if [belongs? (car remoteRepoCarry) localRepoStatic]
-          (pull_envelope (cdr remoteRepoCarry) localRepoStatic
+      (append ToBeAdded workspaceStatic)
+      (if [belongs? (car remoteRepoCarry) workspaceStatic]
+          (pull_envelope (cdr remoteRepoCarry) workspaceStatic
                          ToBeAdded)
-          (pull_envelope (cdr remoteRepoCarry) localRepoStatic
+          (pull_envelope (cdr remoteRepoCarry) workspaceStatic
                          (append ToBeAdded (list (car remoteRepoCarry)))))))
 
 
@@ -100,16 +105,25 @@
 ;dom: area de trabajo
 ;rec: string
 (define (zonas->string workzone)
-  (apply string-append
-         (list
-          (list-->string (get_history workzone))
-          "\n"
-          (list-->string (get_index workzone))
-          "\n"
-          (list-->string (get_localRepo workzone))
-          "\n"
-          (remoteRepo->string (get_remoteRepoDirectory workzone) ""))))
+  (string-append
+   "History\n"
+   (list-->string (get_history workzone))
+   "\n\nWorkspace\n"
+   (list-->string (get_workspace workzone))
+   "\n\nIndex\n"
+   (list-->string (get_index workzone))
+   "\n\nLocal Repository\n"
+   (list-->string (get_localRepo workzone))
+   "\n\nRemote Repositories"
+   (remoteRepo->string (get_remoteRepoDirectory workzone) "")
+  ))
 
+
+(define (remoteRepo->string list_ stringCarry)
+    (if [null? list_]
+        stringCarry
+        (remoteRepo->string (cdr list_) (string-append stringCarry "\n" (list-->string (car list_))))
+        ))
 
 ;STATUS
 ;descripcion: Funcion status.
@@ -130,19 +144,22 @@
 ;dom: area de trabajo
 ;rec: string
 (define (log workzone)
-  (log_envelope (get_localRepo workzone) ""))
+  (log_envelope (get_localRepo workzone) "" 5))
 
 
 ;descripcion: Funcion log (recursion de cola).
 ;dom: repositorio local X string
 ;rec: string
 ;recursion: cola
-(define (log_envelope localRepo stringCarry)
-  (if [null? localRepo]
+(define (log_envelope localRepo stringCarry counter)
+  (if [= counter 0]
+      stringCarry
+   (if [null? localRepo]
       stringCarry
       (log_envelope
        (cdr localRepo)
-       (string-append stringCarry "\n" (list-->string (car localRepo))))))
+       (string-append stringCarry "\n" (list-->string (car localRepo)))
+       (- counter 1)))))
 
 
 ;BRANCH
@@ -162,6 +179,7 @@
 (define (branch_envelope branchName workzone)
   (list
    (get_history workzone)
+   (get_workspace workzone)
    (get_index workzone)
    (get_localRepo workzone)
    (append
@@ -194,19 +212,3 @@
           (checkout_envelope (cdr remoteRepoDirectory) firstRepo
                              (append finalDirectory (list (car remoteRepoDirectory)))))))
 
-
-;MERGE
-;descripcion:
-;dom:
-;rec:
-(define merge null)
-
-
-;DIFF
-;descripcion:
-;dom:
-;rec:
-(define diff null)
-
-
-;EJEMPLOS
