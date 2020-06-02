@@ -126,7 +126,7 @@
 (define (status workzone)
   (string-append
    "\nArchivos en Index\n"
-   (map list-->string (get_index workzone))
+   (list-->string (get_index workzone))
    "\nCommits en repositorio local: "
    (number->string (length (get_localRepo workzone)))
    "\nRama actual: "
