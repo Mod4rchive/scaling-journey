@@ -3,14 +3,6 @@
 (require "remoteRepoTDA.rkt")
 (require "HistoryTDA.rkt")
 
-(define test2
-  (list
-   (list "0 git init")
-   null
-   (list "file1.rkt" "file2.rkt" "file3.rkt" "file4.rkt")
-   (list "ignore .gitignore" "initialization readme.md")
-   (list (list "master" "initialization readme.md"))))
-
 
 ;GIT
 ;descripcion: Funcion git.
@@ -152,7 +144,7 @@
       stringCarry
       (log_envelope
        (cdr localRepo)
-       (string-append stringCarry "\n" (list-->string (car localRepo)))
+       (string-append stringCarry "\n" (car localRepo))
        (- counter 1)))))
 
 
@@ -206,3 +198,56 @@
           (checkout_envelope (cdr remoteRepoDirectory) firstRepo
                              (append finalDirectory (list (car remoteRepoDirectory)))))))
 
+
+
+;;EJEMPLOS
+;((git pull) test1)
+;((git pull) test2)
+;((git pull) test3)
+;((git push) test1)
+;((git push) test2)
+;((git push) test3)
+;(((git add) (list "pikachu.txt" "silla.rkt")) test1)
+;(((git add) (list "pikachu.txt" "silla.rkt")) test2)
+;(((git add) null) test3)
+;(((git commit) "primer commit") test1)
+;(((git commit) "segundo commit") test2)
+;(((git commit) "tercer commit") test3)
+;(zonas->string (((git add) (list "pikachu.txt" "silla.rkt")) test2))
+;(zonas->string (((git commit) "tercer commit") test3))
+;(zonas->string ((git pull) test3))
+;((git status) test1)
+;((git status) ((git push) test1))
+;((git status) test3)
+;((git log) (((git commit) "segundo commit") test2))
+;((git log) test3)
+;((git log) test1)
+
+(define test1
+  (list
+   null
+   null
+   (list "file1.rkt" "file2.rkt" "file3.rkt" "file4.rkt")
+   (list "ignore .gitignore" "initialization readme.md")
+   (list (list "master" "initialization readme.md")))
+  )
+
+(define test2
+  (list
+   (list "0 git init" "1 gitignore")
+   (list "file5.rkt" "file6.rkt" "file7.rkt" "file8.rkt" )
+   (list "file1.rkt" "file2.rkt" "file3.rkt" "file4.rkt" )
+   (list "ignore .gitignore" "initialization readme.md")
+   (list (list "master" "initialization readme.md") (list "branch"  "initialization2 readme.md")))
+  )
+
+(define test3
+  (list
+   (list "0 git init" "1 gitignore")
+   (list "file5.rkt" "file6.rkt" "file7.rkt" "file8.rkt" "image.png" )
+   (list "file1.rkt")
+   (list "ignore .gitignore" "initialization readme.md" "imaging image.png")
+   (list (list "branch3" "initialization readme.md")
+         (list "master"  "initialization2 readme.md")
+         (list "branch"  "initialization2 readme.md")))
+  )
